@@ -45,7 +45,7 @@ Priorité de calcul : vérifier d'abord la fin de partie, puis le seuil exact de
 
 La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. Chaque manche est évaluée avec le total courant : un total exactement égal à `50` déclenche `50 -> 25`, un total exactement égal à `100` déclenche `100 -> 50`, et un total exactement égal à `120` déclenche `120 -> 60` et termine la partie. Un total de `121` ou plus conserve le score réel et termine la partie. En cliquant sur une carte joueur, le popup affiche chaque palier avec sa manche, par exemple `Manche 3 : 50 -> 25`.
 
-La fenêtre d'aide contient également le tableau des pouvoirs : `7 ou 8` permet de regarder une de ses propres cartes, `9 ou 10` une carte adverse, et `Valet ou Dame` permet d'échanger une carte avec celle d'un adversaire sans regarder la carte donnée.
+La fenêtre d'aide contient également le tableau des pouvoirs : `7 ou 8` permet de regarder une de ses propres cartes, `9 ou 10` une carte adverse, `Valet ou Dame` permet d'échanger une carte avec celle d'un adversaire sans regarder la carte donnée, et le `Roi` combine ces pouvoirs au choix. La règle spéciale de score des deux rois noirs reste décrite séparément.
 
 La case `Bonus des deux rois noirs (-15)` autorise un score de manche compris entre `-15` et `45`. Le score ne peut jamais descendre sous `-15`, car le bonus des deux rois noirs est limité à cette réduction. Sans cette option, le score minimal reste `0`.
 
