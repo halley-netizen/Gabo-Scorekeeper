@@ -12,7 +12,7 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - Graphique analytique comparant le score total et les victoires par joueur
 - Détail des scores saisis par joueur en cliquant sur sa carte
 - Historique des paliers déclenchés, avec la manche et la remise appliquée
-- Tableau des pouvoirs des cartes dans l'aide : 7/8, 9/10, Valet/Dame
+- Tableau des pouvoirs des cartes dans l'aide : 7/8, 9/10, Valet/Dame et Roi
 - Tri du récapitulatif par nombre de manches jouées, puis par score
 - Score limité à 45 points par joueur et par manche dans cette version
 - Option « Bonus des deux rois noirs (-15) » : score de manche autorisé entre -15 et 45
