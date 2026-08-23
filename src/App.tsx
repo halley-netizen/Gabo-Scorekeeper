@@ -1,14 +1,13 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { applyThreshold, RoundProgress } from './domain/scoreCalculator'
 
 type Player = { id: string; name: string }
-type Round = { id: string; scores: Record<string, number>; createdAt: string }
+type Round = { id: string; scores: Record<string, number>; results?: Record<string, RoundProgress>; createdAt: string }
 type Game = { players: Player[]; rounds: Round[]; victories: Record<string, number>; threshold: number; stepsEnabled: boolean; negativeScores: boolean; finished: boolean }
 
 const STORAGE_KEY = 'gabo-scorekeeper-game'
 const MAX_ROUND_SCORE = 45
 const MIN_ROUND_SCORE_WITH_BONUS = -15
-const steps = [{ at: 50, resetTo: 25 }, { at: 100, resetTo: 50 }, { at: 120, resetTo: 60 }]
-
 const newPlayer = (index: number): Player => ({ id: crypto.randomUUID(), name: `Joueur ${index}` })
 const emptyGame = (): Game => ({ players: [newPlayer(1), newPlayer(2)], rounds: [], victories: {}, threshold: 120, stepsEnabled: true, negativeScores: false, finished: false })
 
@@ -21,26 +20,28 @@ function loadGame(): Game {
   } catch { return emptyGame() }
 }
 
-function calculateTotals(game: Game): Record<string, number> {
+function calculateProgress(game: Game): { totals: Record<string, number>; roundResults: Array<Record<string, RoundProgress>> } {
   const totals = Object.fromEntries(game.players.map((player) => [player.id, 0])) as Record<string, number>
-  const appliedSteps = Object.fromEntries(game.players.map((player) => [player.id, new Set<number>()])) as Record<string, Set<number>>
-  const rawTotals = Object.fromEntries(game.players.map((player) => [player.id, 0])) as Record<string, number>
+  const roundResults: Array<Record<string, RoundProgress>> = []
+  let gameOver = false
   for (const round of game.rounds) {
+    const results: Record<string, RoundProgress> = {}
+    const roundAlreadyOver = gameOver
     for (const player of game.players) {
       const score = round.scores[player.id] ?? 0
-      rawTotals[player.id] += score
-      totals[player.id] += score
-      if (game.stepsEnabled) {
-        for (const step of steps) {
-          if (rawTotals[player.id] >= step.at && !appliedSteps[player.id].has(step.at)) {
-            totals[player.id] = step.resetTo
-            appliedSteps[player.id].add(step.at)
-          }
-        }
-      }
+      const totalBefore = totals[player.id] + score
+      const result = applyThreshold(totalBefore, { thresholdsEnabled: game.stepsEnabled, endScore: game.threshold, gameOver: roundAlreadyOver })
+      totals[player.id] = result.score
+      results[player.id] = { ...result, totalBefore }
+      if (result.gameOver) gameOver = true
     }
+    roundResults.push(results)
   }
-  return totals
+  return { totals, roundResults }
+}
+
+function calculateTotals(game: Game): Record<string, number> {
+  return calculateProgress(game).totals
 }
 
 function calculateVictories(game: Game): Record<string, number> {
@@ -59,22 +60,13 @@ function calculateRawTotal(game: Game, playerId: string): number {
 }
 
 function calculateAppliedSteps(game: Game, playerId: string): Array<{ round: number; at: number; resetTo: number }> {
-  let rawTotal = 0
-  let total = 0
-  const appliedStepThresholds = new Set<number>()
   const stepHistory: Array<{ round: number; at: number; resetTo: number }> = []
-  for (const [index, round] of game.rounds.entries()) {
-    const score = round.scores[playerId] ?? 0
-    rawTotal += score
-    total += score
-    if (!game.stepsEnabled) continue
-    for (const step of steps) {
-      if (rawTotal >= step.at && !appliedStepThresholds.has(step.at)) {
-        stepHistory.push({ round: index + 1, at: step.at, resetTo: step.resetTo })
-        appliedStepThresholds.add(step.at)
-        total = step.resetTo
-      }
-    }
+  const progress = calculateProgress(game)
+  for (const [index, results] of progress.roundResults.entries()) {
+    const result = results[playerId]
+    if (result?.thresholdApplied === 50) stepHistory.push({ round: index + 1, at: 50, resetTo: 25 })
+    if (result?.thresholdApplied === 100) stepHistory.push({ round: index + 1, at: 100, resetTo: 50 })
+    if (result?.thresholdApplied === 120) stepHistory.push({ round: index + 1, at: 120, resetTo: 60 })
   }
   return stepHistory
 }
@@ -84,6 +76,7 @@ function App() {
   const [showRules, setShowRules] = useState(false)
   const [roundOpen, setRoundOpen] = useState(false)
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  const [thresholdNotice, setThresholdNotice] = useState<string | null>(null)
   const totals = useMemo(() => calculateTotals(game), [game])
   const victories = useMemo(() => calculateVictories(game), [game])
   const orderedPlayers = useMemo(() => [...game.players].sort((a, b) => totals[a.id] - totals[b.id]), [game.players, totals])
@@ -94,6 +87,11 @@ function App() {
   const selectedPlayer = game.players.find((player) => player.id === selectedPlayerId)
 
   useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(game)), [game])
+  useEffect(() => {
+    if (!thresholdNotice) return
+    const timeout = window.setTimeout(() => setThresholdNotice(null), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [thresholdNotice])
 
   function updateGame(patch: Partial<Game>) { setGame((current) => ({ ...current, ...patch })) }
   function resetGame(samePlayers = false) {
@@ -123,8 +121,13 @@ function App() {
       return
     }
     const nextGame = { ...game, rounds: [...game.rounds, { id: crypto.randomUUID(), scores, createdAt: new Date().toISOString() }] }
-    const nextTotals = calculateTotals(nextGame)
-    const finished = Object.values(nextTotals).some((total) => total >= game.threshold)
+    const progress = calculateProgress(nextGame)
+    const results = progress.roundResults.at(-1) ?? {}
+    const finished = Object.values(results).some((result) => result.gameOver)
+    nextGame.rounds[nextGame.rounds.length - 1].results = results
+    const applied = Object.values(results).find((result) => result.thresholdApplied !== null)
+    if (applied) setThresholdNotice(`Palier atteint : le score redescend à ${applied.score} points.`)
+    if (finished) setThresholdNotice('Fin de partie : le score réel est conservé.')
     updateGame({ rounds: nextGame.rounds, finished })
     setRoundOpen(false)
   }
@@ -134,6 +137,8 @@ function App() {
       <div><p className="eyebrow">Carnet de table</p><h1>Gabo <span>Scorekeeper</span></h1></div>
       <button className="icon-button" onClick={() => setShowRules(true)} aria-label="Ouvrir les règles">?</button>
     </header>
+
+    {thresholdNotice && <div className="threshold-notice" role="status">{thresholdNotice}</div>}
 
     {game.finished && <section className="finish-banner"><div><p className="eyebrow">Partie terminée</p><h2>{orderedPlayers[0].name} gagne la partie</h2><p>Le score le plus bas remporte Gabo.</p></div><div className="finish-actions"><button onClick={() => resetGame(true)}>Rejouer</button><button className="secondary" onClick={startNewGame}>Nouvelle partie</button></div></section>}
 
@@ -153,7 +158,7 @@ function App() {
     <section className="rules-summary"><p className="eyebrow">À retenir</p><h2>Récapitulatif des règles</h2><div className="rules-columns"><p><strong>But</strong><br />Obtenir le moins de points possible. Une manche se joue généralement avec 4 cartes par joueur.</p><p><strong>Score</strong><br />Dans cette version, le score va de 0 à 45 par joueur et par manche. Avec le bonus des deux rois noirs activé, le minimum devient -15 et ne peut pas être dépassé vers le bas.</p><p><strong>Fin</strong><br />Le seuil est fixé à 120 points par défaut. Quand il est atteint, le joueur au score final le plus bas gagne, même si un autre joueur a déclenché la fin.</p><p><strong>Paliers</strong><br />Quand ils sont activés : 50 devient 25, 100 devient 50 et 120 devient 60. Les variantes peuvent différer selon les groupes.</p></div><button className="text-button" onClick={() => setShowRules(true)}>Lire les règles détaillées</button></section>
 
     {roundOpen && <div className="modal-backdrop"><form className="round-modal" onSubmit={submitRound}><button type="button" className="close" onClick={() => setRoundOpen(false)} aria-label="Fermer">x</button><p className="eyebrow">Manche {game.rounds.length + 1}</p><h2>Entrer les scores</h2>{game.players.map((player) => <label key={player.id}>{player.name}<input name={player.id} type="number" min={game.negativeScores ? MIN_ROUND_SCORE_WITH_BONUS : 0} max={MAX_ROUND_SCORE} step="1" required autoComplete="off" placeholder="0" /></label>)}<p className="modal-note">Score par joueur et par manche : de {game.negativeScores ? MIN_ROUND_SCORE_WITH_BONUS : 0} à {MAX_ROUND_SCORE}. Le bonus des deux rois noirs peut produire au maximum -15 points.</p><button className="primary" type="submit">Valider la manche</button></form></div>}
-    {selectedPlayer && <div className="modal-backdrop"><section className="round-modal player-details"><button type="button" className="close" onClick={() => setSelectedPlayerId(null)} aria-label="Fermer">x</button><p className="eyebrow">Détail du joueur</p><h2>{selectedPlayer.name}</h2><div className="detail-total"><strong>{totals[selectedPlayer.id]}</strong><span>points après paliers</span></div><p className="detail-raw-total">Somme des scores saisis : <strong>{calculateRawTotal(game, selectedPlayer.id)} points</strong></p><div className="detail-list">{game.rounds.length ? game.rounds.map((round, index) => <div className="detail-row" key={round.id}><span>Manche {index + 1}</span><strong>{round.scores[selectedPlayer.id] ?? 0} points</strong></div>) : <p className="muted">Aucune manche saisie.</p>}</div><div className="step-history"><strong>Paliers déclenchés</strong>{calculateAppliedSteps(game, selectedPlayer.id).length ? calculateAppliedSteps(game, selectedPlayer.id).map((step) => <div className="step-history-row" key={`${step.round}-${step.at}`}><span>Manche {step.round}</span><strong>{step.at} → {step.resetTo}</strong></div>) : <p className="muted">Aucun palier déclenché.</p>}</div><p className="modal-note">Victoires : {victories[selectedPlayer.id] ?? 0}. Les scores affichés correspondent aux valeurs saisies pour chaque manche.</p></section></div>}
+    {selectedPlayer && <div className="modal-backdrop"><section className="round-modal player-details"><button type="button" className="close" onClick={() => setSelectedPlayerId(null)} aria-label="Fermer">x</button><p className="eyebrow">Détail du joueur</p><h2>{selectedPlayer.name}</h2><div className="detail-total"><strong>{totals[selectedPlayer.id]}</strong><span>points après paliers</span></div><p className="detail-raw-total">Somme des scores saisis : <strong>{calculateRawTotal(game, selectedPlayer.id)} points</strong></p><div className="detail-list">{game.rounds.length ? game.rounds.map((round, index) => { const result = round.results?.[selectedPlayer.id]; return <div className="detail-row detail-round" key={round.id}><div><span>Manche {index + 1}</span>{result && <small>Total avant palier : {result.totalBefore}</small>}</div><strong>{round.scores[selectedPlayer.id] ?? 0} points{result?.thresholdApplied ? ` · ${result.thresholdApplied} → ${result.score}` : ''}</strong>{result?.gameOver && <small className="game-over-label">Fin de partie · score réel conservé</small>}</div> }) : <p className="muted">Aucune manche saisie.</p>}</div><div className="step-history"><strong>Paliers déclenchés</strong>{calculateAppliedSteps(game, selectedPlayer.id).length ? calculateAppliedSteps(game, selectedPlayer.id).map((step) => <div className="step-history-row" key={`${step.round}-${step.at}`}><span>Manche {step.round}</span><strong>{step.at} → {step.resetTo}</strong></div>) : <p className="muted">Aucun palier déclenché.</p>}</div><p className="modal-note">Victoires : {victories[selectedPlayer.id] ?? 0}. Les scores affichés correspondent aux valeurs saisies pour chaque manche.</p></section></div>}
     {showRules && <div className="modal-backdrop"><section className="round-modal rules"><button type="button" className="close" onClick={() => setShowRules(false)} aria-label="Fermer">x</button><p className="eyebrow">Aide</p><h2>Les règles du Gabo</h2><p>Le but est d'obtenir le moins de points possible. Chaque joueur reçoit généralement 4 cartes et tente de terminer la manche avec le meilleur score.</p><h3>Calcul</h3><p>Entrez directement le score de la manche. Avec les deux rois noirs, appliquez le bonus de -15 points. Le score est limité à 0, sauf si les scores négatifs sont activés.</p><h3>Fin de partie</h3><p>La partie s'arrête lorsqu'un total atteint le seuil configuré. Le gagnant est le joueur au total final le plus bas.</p><p className="modal-note">Les règles peuvent varier selon les groupes et les variantes jouées.</p></section></div>}
   </main>
 }

@@ -15,7 +15,7 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - Tri du récapitulatif par nombre de manches jouées, puis par score
 - Score limité à 45 points par joueur et par manche dans cette version
 - Option « Bonus des deux rois noirs (-15) » : score de manche autorisé entre -15 et 45
-- Paliers activables : 50 -> 25, 100 -> 50, 120 -> 60
+- Paliers exacts activables : 50 -> 25, 100 -> 50, 120 -> 60
 - Seuil de fin configurable, 120 points par défaut
 - Fin de partie, gagnant et égalités pris en compte
 - Suppression confirmée de la dernière manche
@@ -38,7 +38,9 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 
 Le graphique présente une ligne par joueur avec une barre pour le score total, une barre pour les victoires et le nombre de manches jouées. Les données sont recalculées après chaque manche.
 
-Le score actuel tient compte des paliers. Par exemple, avec les paliers activés, `25 + 35 = 60` points saisis déclenche le palier `50 -> 25`. L'application affiche donc le score actuel `25` et conserve la somme brute `60` dans la colonne `Total saisi` ainsi que dans le détail du joueur.
+Le score actuel applique uniquement les seuils exacts. `50` devient `25`, `100` devient `50` et `120` devient `60` tout en terminant la partie. Un score supérieur à 120, comme `123`, conserve son score réel et termine la partie. Un score de `53`, `99` ou `104` reste inchangé. L'application affiche le score actuel et conserve la somme brute dans la colonne `Total saisi` ainsi que dans le détail du joueur.
+
+Priorité de calcul : vérifier d'abord la fin de partie, puis le seuil exact de 120, le seuil exact de 100 et enfin le seuil exact de 50. Si les paliers sont désactivés, le total est une addition simple.
 
 La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. Les seuils sont franchis une seule fois sur la somme brute cumulée des scores saisis : un total de `115` déclenche `50 -> 25`, puis `100 -> 50`, sans réappliquer le palier de 50 après une remise. En cliquant sur une carte joueur, le popup affiche chaque palier avec sa manche, par exemple `Manche 3 : 50 -> 25`.
 
@@ -74,11 +76,13 @@ Le parcours navigateur a été vérifié sur l'application locale :
 - Acceptation du score maximum de `45`
 - Comptage des victoires à chaque manche, avec égalités comptées pour chaque joueur concerné
 - Vérification du cas `25 + 35` : la somme brute est distinguée du total après palier `50 -> 25`
+- Vérification des seuils exacts `50 -> 25`, `100 -> 50` et `120 -> 60`
+- Vérification de la conservation du score réel au-dessus de 120
 - Ouverture du détail d'un joueur avec toutes ses manches saisies
 - Confirmation obligatoire avant `Nouvelle partie`
 - Effacement confirmé des scores, manches, victoires et options
 
-Le build de production a également été validé avec `npm run build`.
+Le build de production a également été validé avec `npm run build`. Les tests métier sont disponibles avec `npm test`.
 
 Pour lancer le serveur de développement sur Windows si PowerShell bloque `npx.ps1`, utilisez les wrappers `.cmd` :
 
