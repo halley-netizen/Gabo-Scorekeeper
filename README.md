@@ -7,6 +7,7 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - 2 à 6 joueurs, avec noms modifiables
 - Ajout des scores manche par manche
 - Score cumulé et classement en direct
+- Distinction visible entre score actuel après paliers et total des scores saisis
 - Tableau récapitulatif en bas de page avec manches jouées et victoires
 - Graphique analytique comparant le score total et les victoires par joueur
 - Détail des scores saisis par joueur en cliquant sur sa carte
@@ -35,6 +36,8 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 `Rejouer` conserve les mêmes joueurs mais remet les scores à zéro. `Nouvelle partie` efface les joueurs, options, manches, scores et victoires après confirmation.
 
 Le graphique présente une ligne par joueur avec une barre pour le score total, une barre pour les victoires et le nombre de manches jouées. Les données sont recalculées après chaque manche.
+
+Le score actuel tient compte des paliers. Par exemple, avec les paliers activés, `25 + 35 = 60` points saisis déclenche le palier `50 -> 25`. L'application affiche donc le score actuel `25` et conserve la somme brute `60` dans la colonne `Total saisi` ainsi que dans le détail du joueur.
 
 La case `Bonus des deux rois noirs (-15)` autorise un score de manche négatif pour appliquer cette règle. Sans cette option, le score minimal reste 0. Le plafond de 45 points reste appliqué dans les deux cas.
 
