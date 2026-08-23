@@ -23,12 +23,20 @@ function loadGame(): Game {
 
 function calculateTotals(game: Game): Record<string, number> {
   const totals = Object.fromEntries(game.players.map((player) => [player.id, 0])) as Record<string, number>
+  const appliedSteps = Object.fromEntries(game.players.map((player) => [player.id, new Set<number>()])) as Record<string, Set<number>>
+  const rawTotals = Object.fromEntries(game.players.map((player) => [player.id, 0])) as Record<string, number>
   for (const round of game.rounds) {
     for (const player of game.players) {
-      totals[player.id] += round.scores[player.id] ?? 0
+      const score = round.scores[player.id] ?? 0
+      rawTotals[player.id] += score
+      totals[player.id] += score
       if (game.stepsEnabled) {
-        const step = [...steps].reverse().find((item) => totals[player.id] >= item.at)
-        if (step) totals[player.id] = step.resetTo
+        for (const step of steps) {
+          if (rawTotals[player.id] >= step.at && !appliedSteps[player.id].has(step.at)) {
+            totals[player.id] = step.resetTo
+            appliedSteps[player.id].add(step.at)
+          }
+        }
       }
     }
   }
@@ -51,18 +59,24 @@ function calculateRawTotal(game: Game, playerId: string): number {
 }
 
 function calculateAppliedSteps(game: Game, playerId: string): Array<{ round: number; at: number; resetTo: number }> {
+  let rawTotal = 0
   let total = 0
-  const appliedSteps: Array<{ round: number; at: number; resetTo: number }> = []
+  const appliedStepThresholds = new Set<number>()
+  const stepHistory: Array<{ round: number; at: number; resetTo: number }> = []
   for (const [index, round] of game.rounds.entries()) {
-    total += round.scores[playerId] ?? 0
+    const score = round.scores[playerId] ?? 0
+    rawTotal += score
+    total += score
     if (!game.stepsEnabled) continue
-    const step = [...steps].reverse().find((item) => total >= item.at)
-    if (step) {
-      appliedSteps.push({ round: index + 1, at: step.at, resetTo: step.resetTo })
-      total = step.resetTo
+    for (const step of steps) {
+      if (rawTotal >= step.at && !appliedStepThresholds.has(step.at)) {
+        stepHistory.push({ round: index + 1, at: step.at, resetTo: step.resetTo })
+        appliedStepThresholds.add(step.at)
+        total = step.resetTo
+      }
     }
   }
-  return appliedSteps
+  return stepHistory
 }
 
 function App() {

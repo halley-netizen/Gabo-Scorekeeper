@@ -40,7 +40,7 @@ Le graphique présente une ligne par joueur avec une barre pour le score total, 
 
 Le score actuel tient compte des paliers. Par exemple, avec les paliers activés, `25 + 35 = 60` points saisis déclenche le palier `50 -> 25`. L'application affiche donc le score actuel `25` et conserve la somme brute `60` dans la colonne `Total saisi` ainsi que dans le détail du joueur.
 
-La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. En cliquant sur une carte joueur, le popup affiche le détail, par exemple `Manche 2 : 50 -> 25`, ainsi que tous les scores saisis.
+La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. Les seuils sont franchis une seule fois sur la somme brute cumulée des scores saisis : un total de `115` déclenche `50 -> 25`, puis `100 -> 50`, sans réappliquer le palier de 50 après une remise. En cliquant sur une carte joueur, le popup affiche chaque palier avec sa manche, par exemple `Manche 3 : 50 -> 25`.
 
 La case `Bonus des deux rois noirs (-15)` autorise un score de manche compris entre `-15` et `45`. Le score ne peut jamais descendre sous `-15`, car le bonus des deux rois noirs est limité à cette réduction. Sans cette option, le score minimal reste `0`.
 
