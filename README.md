@@ -8,6 +8,7 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - Ajout des scores manche par manche
 - Score cumulé et classement en direct
 - Tableau récapitulatif en bas de page avec manches jouées et victoires
+- Graphique analytique comparant le score total et les victoires par joueur
 - Tri du récapitulatif par nombre de manches jouées, puis par score
 - Score limité à 45 points par joueur et par manche dans cette version
 - Option « Bonus des deux rois noirs (-15) » pour autoriser un résultat négatif
@@ -20,6 +21,18 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - Sauvegarde et reprise automatique via `localStorage`
 
 > Les règles du Gabo peuvent varier selon les groupes. La limite de 45 points est appliquée comme règle de cette version et peut être adaptée à votre variante.
+
+## Utilisation
+
+1. Modifiez les noms des joueurs et configurez le seuil de fin.
+2. Activez ou désactivez les paliers et le bonus négatif des deux rois noirs.
+3. Cliquez sur `Nouvelle manche` et saisissez un entier compris entre 0 et 45 pour chaque joueur.
+4. Consultez le classement en direct, puis le graphique et le tableau `Manches & victoires` en bas de page.
+5. Quand le seuil est atteint, la partie se termine. Le joueur au score final le plus bas gagne; les égalités sont conservées.
+
+Le graphique présente une ligne par joueur avec une barre pour le score total, une barre pour les victoires et le nombre de manches jouées. Les données sont recalculées après chaque manche.
+
+La case `Bonus des deux rois noirs (-15)` autorise un score de manche négatif pour appliquer cette règle. Sans cette option, le score minimal reste 0. Le plafond de 45 points reste appliqué dans les deux cas.
 
 ## Installation locale
 
@@ -40,6 +53,14 @@ npm run preview
 ```
 
 Le dossier de sortie de production est `dist`.
+
+Pour lancer le serveur de développement sur Windows si PowerShell bloque `npx.ps1`, utilisez les wrappers `.cmd` :
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+npm.cmd run build
+```
 
 ## Déploiement Vercel
 
