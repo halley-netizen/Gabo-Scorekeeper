@@ -42,7 +42,7 @@ Le score actuel applique uniquement les seuils exacts. `50` devient `25`, `100` 
 
 Priorité de calcul : vérifier d'abord la fin de partie, puis le seuil exact de 120, le seuil exact de 100 et enfin le seuil exact de 50. Si les paliers sont désactivés, le total est une addition simple.
 
-La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. Les seuils sont franchis une seule fois sur la somme brute cumulée des scores saisis : un total de `115` déclenche `50 -> 25`, puis `100 -> 50`, sans réappliquer le palier de 50 après une remise. En cliquant sur une carte joueur, le popup affiche chaque palier avec sa manche, par exemple `Manche 3 : 50 -> 25`.
+La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. Chaque manche est évaluée avec le total courant : un total exactement égal à `50` déclenche `50 -> 25`, un total exactement égal à `100` déclenche `100 -> 50`, et un total exactement égal à `120` déclenche `120 -> 60` et termine la partie. Un total de `121` ou plus conserve le score réel et termine la partie. En cliquant sur une carte joueur, le popup affiche chaque palier avec sa manche, par exemple `Manche 3 : 50 -> 25`.
 
 La case `Bonus des deux rois noirs (-15)` autorise un score de manche compris entre `-15` et `45`. Le score ne peut jamais descendre sous `-15`, car le bonus des deux rois noirs est limité à cette réduction. Sans cette option, le score minimal reste `0`.
 

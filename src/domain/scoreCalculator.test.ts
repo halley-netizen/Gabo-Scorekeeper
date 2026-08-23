@@ -38,4 +38,9 @@ describe('applyThreshold', () => {
   it('does not reduce an already finished score', () => {
     expect(applyThreshold(53, { ...enabled, gameOver: true })).toEqual({ score: 53, thresholdApplied: null, gameOver: true })
   })
+
+  it('applies the exact 120 threshold and preserves scores above it', () => {
+    expect(applyThreshold(120, enabled)).toEqual({ score: 60, thresholdApplied: 120, gameOver: true })
+    expect(applyThreshold(121, enabled)).toEqual({ score: 121, thresholdApplied: null, gameOver: true })
+  })
 })
