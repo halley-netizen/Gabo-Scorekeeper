@@ -57,6 +57,19 @@ npm run preview
 
 Le dossier de sortie de production est `dist`.
 
+## Tests end-to-end effectués
+
+Le parcours navigateur a été vérifié sur l'application locale :
+
+- Ouverture de l'application et affichage responsive du graphique analytique
+- Ajout d'une manche valide avec mise à jour du classement, du graphique et du tableau
+- Refus d'un score de `46` et maintien du formulaire ouvert
+- Acceptation du score maximum de `45`
+- Confirmation obligatoire avant `Nouvelle partie`
+- Effacement confirmé des scores, manches, victoires et options
+
+Le build de production a également été validé avec `npm run build`.
+
 Pour lancer le serveur de développement sur Windows si PowerShell bloque `npx.ps1`, utilisez les wrappers `.cmd` :
 
 ```powershell
