@@ -23,17 +23,16 @@ function loadGame(): Game {
 function calculateProgress(game: Game): { totals: Record<string, number>; roundResults: Array<Record<string, RoundProgress>> } {
   const totals = Object.fromEntries(game.players.map((player) => [player.id, 0])) as Record<string, number>
   const roundResults: Array<Record<string, RoundProgress>> = []
-  let gameOver = false
+  const gameOverByPlayer = Object.fromEntries(game.players.map((player) => [player.id, false])) as Record<string, boolean>
   for (const round of game.rounds) {
     const results: Record<string, RoundProgress> = {}
-    const roundAlreadyOver = gameOver
     for (const player of game.players) {
       const score = round.scores[player.id] ?? 0
       const totalBefore = totals[player.id] + score
-      const result = applyThreshold(totalBefore, { thresholdsEnabled: game.stepsEnabled, endScore: game.threshold, gameOver: roundAlreadyOver })
+      const result = applyThreshold(totalBefore, { thresholdsEnabled: game.stepsEnabled, endScore: game.threshold, gameOver: gameOverByPlayer[player.id] })
       totals[player.id] = result.score
       results[player.id] = { ...result, totalBefore }
-      if (result.gameOver) gameOver = true
+      if (result.gameOver) gameOverByPlayer[player.id] = true
     }
     roundResults.push(results)
   }

@@ -33,6 +33,7 @@ describe('applyThreshold', () => {
 
   it('uses a custom end score before applying any threshold', () => {
     expect(applyThreshold(80, { thresholdsEnabled: true, endScore: 80 })).toEqual({ score: 80, thresholdApplied: null, gameOver: true })
+    expect(applyThreshold(100, { thresholdsEnabled: true, endScore: 80 })).toEqual({ score: 100, thresholdApplied: null, gameOver: true })
   })
 
   it('does not reduce an already finished score', () => {
