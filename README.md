@@ -9,6 +9,7 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - Score cumulé et classement en direct
 - Tableau récapitulatif en bas de page avec manches jouées et victoires
 - Graphique analytique comparant le score total et les victoires par joueur
+- Détail des scores saisis par joueur en cliquant sur sa carte
 - Tri du récapitulatif par nombre de manches jouées, puis par score
 - Score limité à 45 points par joueur et par manche dans cette version
 - Option « Bonus des deux rois noirs (-15) » pour autoriser un résultat négatif
@@ -65,6 +66,9 @@ Le parcours navigateur a été vérifié sur l'application locale :
 - Ajout d'une manche valide avec mise à jour du classement, du graphique et du tableau
 - Refus d'un score de `46` et maintien du formulaire ouvert
 - Acceptation du score maximum de `45`
+- Comptage des victoires à chaque manche, avec égalités comptées pour chaque joueur concerné
+- Vérification du cas `25 + 35` : la somme brute est distinguée du total après palier `50 -> 25`
+- Ouverture du détail d'un joueur avec toutes ses manches saisies
 - Confirmation obligatoire avant `Nouvelle partie`
 - Effacement confirmé des scores, manches, victoires et options
 
