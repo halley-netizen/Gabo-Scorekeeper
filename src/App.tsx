@@ -52,6 +52,10 @@ function App() {
     setGame((current) => ({ ...emptyGame(), players: samePlayers ? current.players : emptyGame().players }))
     setRoundOpen(false)
   }
+  function startNewGame() {
+    if (!window.confirm('Démarrer une nouvelle partie ? Tous les joueurs, scores, manches et options actuels seront supprimés.')) return
+    resetGame()
+  }
   function addPlayer() {
     if (game.players.length < 6) updateGame({ players: [...game.players, newPlayer(game.players.length + 1)] })
   }
@@ -88,7 +92,7 @@ function App() {
       <button className="icon-button" onClick={() => setShowRules(true)} aria-label="Ouvrir les règles">?</button>
     </header>
 
-    {game.finished && <section className="finish-banner"><div><p className="eyebrow">Partie terminée</p><h2>{orderedPlayers[0].name} gagne la partie</h2><p>Le score le plus bas remporte Gabo.</p></div><div className="finish-actions"><button onClick={() => resetGame(true)}>Rejouer</button><button className="secondary" onClick={() => resetGame()}>Nouvelle partie</button></div></section>}
+    {game.finished && <section className="finish-banner"><div><p className="eyebrow">Partie terminée</p><h2>{orderedPlayers[0].name} gagne la partie</h2><p>Le score le plus bas remporte Gabo.</p></div><div className="finish-actions"><button onClick={() => resetGame(true)}>Rejouer</button><button className="secondary" onClick={startNewGame}>Nouvelle partie</button></div></section>}
 
     <section className="setup-panel">
       <div className="section-heading"><div><p className="eyebrow">Configuration</p><h2>Les joueurs</h2></div><span className="count">{game.players.length}/6</span></div>
@@ -99,7 +103,7 @@ function App() {
 
     <section className="score-section"><div className="section-heading"><div><p className="eyebrow">En direct</p><h2>Tableau des scores</h2></div><span className="round-count">{game.rounds.length} manche{game.rounds.length > 1 ? 's' : ''}</span></div><div className="score-grid">{orderedPlayers.map((player, index) => <article className={`score-card ${index === 0 ? 'leader' : ''}`} key={player.id}><div className="rank">#{index + 1}</div><h3>{player.name}</h3><strong>{totals[player.id]}</strong><small>points</small></article>)}</div></section>
 
-    <section className="action-panel"><div><p className="eyebrow">À la table</p><h2>Ajouter une manche</h2><p className="muted">Saisissez les points de chacun, puis validez.</p></div><button className="primary" onClick={() => setRoundOpen(true)} disabled={game.finished}>+ Nouvelle manche</button>{game.rounds.length > 0 && <button className="text-button" onClick={deleteLastRound}>Supprimer la dernière manche</button>}</section>
+    <section className="action-panel"><div><p className="eyebrow">À la table</p><h2>Ajouter une manche</h2><p className="muted">Saisissez les points de chacun, puis validez.</p></div><button className="primary" onClick={() => setRoundOpen(true)} disabled={game.finished}>+ Nouvelle manche</button>{game.rounds.length > 0 && <button className="text-button" onClick={deleteLastRound}>Supprimer la dernière manche</button>}<button className="text-button danger-button" onClick={startNewGame}>Nouvelle partie</button></section>
 
     <section className="summary-section"><div className="section-heading"><div><p className="eyebrow">Récapitulatif</p><h2>Manches & victoires</h2></div></div><div className="analytics-chart"><div className="chart-legend"><span><i className="legend-score" /> Score total</span><span><i className="legend-wins" /> Victoires</span></div>{summaryPlayers.map((player) => { const score = totals[player.id]; const victories = game.victories[player.id] ?? 0; return <div className="chart-row" key={player.id}><div className="chart-name"><strong>{player.name}</strong><small>{roundsPlayed(player.id)} manche{roundsPlayed(player.id) > 1 ? 's' : ''}</small></div><div className="chart-bars"><div className="bar-line"><span className="bar-value">{score}</span><div className="bar-track"><div className="bar-fill score-fill" style={{ width: `${Math.max((score / highestScore) * 100, score > 0 ? 4 : 0)}%` }} /></div></div><div className="bar-line"><span className="bar-value wins">{victories}</span><div className="bar-track"><div className="bar-fill wins-fill" style={{ width: `${victories ? Math.max((victories / highestVictories) * 100, 4) : 0}%` }} /></div></div></div></div> })}</div><div className="summary-table-wrap"><table className="summary-table"><thead><tr><th>Rang</th><th>Joueur</th><th>Manches</th><th>Score</th><th>Victoires</th></tr></thead><tbody>{summaryPlayers.map((player, index) => <tr key={player.id}><td>#{index + 1}</td><td>{player.name}</td><td>{roundsPlayed(player.id)}</td><td>{totals[player.id]}</td><td className="wins">{game.victories[player.id] ?? 0}</td></tr>)}</tbody></table></div></section>
 

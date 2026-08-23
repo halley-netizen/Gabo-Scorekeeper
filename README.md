@@ -17,6 +17,7 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - Fin de partie, gagnant et égalités pris en compte
 - Suppression confirmée de la dernière manche
 - Rejouer avec les mêmes joueurs ou commencer une nouvelle partie
+- Nouvelle partie protégée par une confirmation avant l'effacement complet
 - Récapitulatif des règles visible et aide détaillée
 - Sauvegarde et reprise automatique via `localStorage`
 
@@ -29,6 +30,8 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 3. Cliquez sur `Nouvelle manche` et saisissez un entier compris entre 0 et 45 pour chaque joueur.
 4. Consultez le classement en direct, puis le graphique et le tableau `Manches & victoires` en bas de page.
 5. Quand le seuil est atteint, la partie se termine. Le joueur au score final le plus bas gagne; les égalités sont conservées.
+
+`Rejouer` conserve les mêmes joueurs mais remet les scores à zéro. `Nouvelle partie` efface les joueurs, options, manches, scores et victoires après confirmation.
 
 Le graphique présente une ligne par joueur avec une barre pour le score total, une barre pour les victoires et le nombre de manches jouées. Les données sont recalculées après chaque manche.
 
