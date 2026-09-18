@@ -130,18 +130,25 @@ npm.cmd run build
 
 ## Déploiement Vercel
 
-Le projet est compatible avec Vercel :
+L'application est en ligne sur **https://gabo-scorekeeper.vercel.app**.
+
+Le projet Vercel `gabo-scorekeeper` (sous le compte `halley-netizen`) est connecté au dépôt GitHub [`halley-netizen/Gabo-Scorekeeper`](https://github.com/halley-netizen/Gabo-Scorekeeper) : chaque `git push` sur `main` déclenche automatiquement un nouveau déploiement de production, sans action manuelle. Réglages détectés automatiquement (préréglage Vite) :
+
+- Build command : `npm run build` (ou `vite build`)
+- Output directory : `dist` (déduit automatiquement par le préréglage Vite)
+- Install command : `npm install`
+- Node.js : 24.x
+
+Aucune clé API ni donnée secrète n'est nécessaire, l'application n'ayant pas de backend.
+
+Pour déployer manuellement depuis la machine locale plutôt que via `git push` (par exemple pour prévisualiser une branche) :
 
 ```bash
-npx vercel
+npx vercel          # déploiement de preview
+npx vercel --prod   # déploiement de production
 ```
 
-Depuis le tableau de bord Vercel, utiliser :
-
-- Build command : `npm run build`
-- Output directory : `dist`
-
-Aucune clé API ni donnée secrète n'est nécessaire.
+La première utilisation demande de se connecter (`npx vercel login`) puis de lier le dossier au projet existant (`npx vercel link`).
 
 ## Structure
 
