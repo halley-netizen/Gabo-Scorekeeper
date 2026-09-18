@@ -16,12 +16,14 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 - Tri du récapitulatif par nombre de manches jouées, puis par score
 - Score limité à 45 points par joueur et par manche dans cette version
 - Option « Bonus des deux rois noirs (-15) » : score de manche autorisé entre -15 et 45
-- Paliers exacts activables : 50 -> 25, 100 -> 50, 120 -> 60
-- Seuil de fin configurable, 120 points par défaut
+- 3 parties prédéfinies avec leurs paliers exacts, activables ou non : 60 (50/60), 120 par défaut (50/100/120), 180 (50/100/150/180)
+- Seuil de fin verrouillé dès la première manche jouée ; seule une nouvelle partie permet d'en changer
 - Fin de partie, gagnant et égalités pris en compte
 - Suppression confirmée de la dernière manche
 - Rejouer avec les mêmes joueurs ou commencer une nouvelle partie
 - Nouvelle partie protégée par une confirmation avant l'effacement complet
+- Sélection optionnelle du joueur qui a dit « Gabo » à chaque manche, comptabilisée dans le récapitulatif
+- Popup de fin de partie avec podium (avatars colorés) et récapitulatif complet des scores, victoires et appels de Gabo
 - Récapitulatif des règles visible et aide détaillée
 - Sauvegarde et reprise automatique via `localStorage`
 
@@ -29,21 +31,49 @@ Une webapp mobile-first pour compter les scores d'une partie de Gabo, sans backe
 
 ## Utilisation
 
-1. Modifiez les noms des joueurs et configurez le seuil de fin.
+1. Modifiez les noms des joueurs et choisissez le seuil de fin parmi les 3 parties prédéfinies : `60`, `120` ou `180`.
 2. Activez ou désactivez les paliers et le bonus négatif des deux rois noirs.
-3. Cliquez sur `Nouvelle manche` et saisissez un entier compris entre 0 et 45 pour chaque joueur.
+3. Cliquez sur `Nouvelle manche`, saisissez un entier compris entre 0 et 45 pour chaque joueur, et désignez optionnellement le joueur qui a dit « Gabo » pour cette manche.
 4. Consultez le classement en direct, puis le graphique et le tableau `Manches & victoires` en bas de page.
-5. Quand le seuil est atteint, la partie se termine. Le joueur au score final le plus bas gagne; les égalités sont conservées.
+5. Quand le seuil choisi est atteint, la partie se termine et un popup podium s'affiche avec le classement final. Le joueur au score final le plus bas gagne; les égalités sont conservées.
 
 `Rejouer` conserve les mêmes joueurs mais remet les scores à zéro. `Nouvelle partie` efface les joueurs, options, manches, scores et victoires après confirmation.
 
 Le graphique présente une ligne par joueur avec une barre pour le score total, une barre pour les victoires et le nombre de manches jouées. Les données sont recalculées après chaque manche.
 
-Le score actuel applique uniquement les seuils exacts. `50` devient `25`, `100` devient `50` et `120` devient `60` tout en terminant la partie. Un score supérieur à 120, comme `123`, conserve son score réel et termine la partie. Un score de `53`, `99` ou `104` reste inchangé. L'application affiche le score actuel et conserve la somme brute dans la colonne `Total saisi` ainsi que dans le détail du joueur.
+### Seuil de fin et paliers
 
-Priorité de calcul : vérifier d'abord la fin de partie, puis le seuil exact de 120, le seuil exact de 100 et enfin le seuil exact de 50. Si les paliers sont désactivés, le total est une addition simple.
+Chacune des 3 parties prédéfinies a ses propres paliers exacts, qui s'appliquent au total courant d'un joueur (et non au score d'une seule manche) :
 
-La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. Chaque manche est évaluée avec le total courant : un total exactement égal à `50` déclenche `50 -> 25`, un total exactement égal à `100` déclenche `100 -> 50`, et un total exactement égal à `120` déclenche `120 -> 60` et termine la partie. Un total de `121` ou plus conserve le score réel et termine la partie. En cliquant sur une carte joueur, le popup affiche chaque palier avec sa manche, par exemple `Manche 3 : 50 -> 25`.
+| Partie | Paliers exacts | Réduction |
+| --- | --- | --- |
+| 60 | 50, 60 | 50 -> 25, 60 -> 30 (fin de partie) |
+| 120 (par défaut) | 50, 100, 120 | 50 -> 25, 100 -> 50, 120 -> 60 (fin de partie) |
+| 180 | 50, 100, 150, 180 | 50 -> 25, 100 -> 50, 150 -> 75, 180 -> 90 (fin de partie) |
+
+Un total qui atteint exactement un palier intermédiaire voit son score divisé par deux et la partie continue. Un total qui atteint exactement le dernier palier (le seuil de fin) voit son score divisé par deux et la partie se termine. Un total qui dépasse le seuil de fin sans l'atteindre exactement conserve son score réel et termine également la partie. Si les paliers sont désactivés, le total est une addition simple jusqu'au seuil de fin choisi.
+
+La colonne `Paliers` du tableau indique combien de paliers chaque joueur a déclenchés. En cliquant sur une carte joueur, le popup affiche chaque palier avec sa manche, par exemple `Manche 3 : 50 -> 25`.
+
+**Verrouillage du seuil** : les boutons `60` / `120` / `180` ne peuvent être changés qu'avant la toute première manche de la partie. Dès qu'une manche est saisie (`game.rounds.length > 0`), les 3 boutons sont grisés et désactivés, et un message « verrouillé, commencez une nouvelle partie pour changer » apparaît sous les paliers. Cela évite de fausser une partie en cours en changeant son seuil de fin en pleine partie. Pour jouer avec un autre seuil, il faut démarrer une `Nouvelle partie` (ou `Supprimer la dernière manche` jusqu'à revenir à zéro manche, ce qui redéverrouille temporairement le sélecteur). L'option `Paliers activés` et le bonus des deux rois noirs restent modifiables à tout moment, y compris en cours de partie.
+
+### Dire Gabo
+
+Dans le formulaire `Nouvelle manche`, un groupe de boutons radio « Qui a dit Gabo ? (optionnel) » liste `Personne` (sélectionné par défaut) puis chaque joueur. Un seul joueur peut être désigné par manche, celui qui annonce Gabo en pensant avoir le score le plus bas. Ce choix est purement déclaratif : il n'a aucun effet sur le calcul du score ni sur la détermination du vainqueur de la manche (basée uniquement sur le score le plus bas saisi). Il alimente uniquement un compteur par joueur, visible à trois endroits :
+
+- la colonne `Gabo` du tableau récapitulatif `Manches & victoires` (`—` si le joueur n'a jamais dit Gabo) ;
+- le détail d'un joueur (clic sur sa carte de score), avec un tag `Gabo dit` sur chaque manche concernée et le total dans la note de bas de popup ;
+- le récapitulatif du popup de fin de partie, ligne par ligne.
+
+### Podium de fin de partie
+
+Quand la partie se termine (seuil de fin atteint ou dépassé), un popup s'affiche automatiquement, sans action requise :
+
+- **Podium** : les 3 premiers joueurs (score le plus bas en tête), chacun avec un avatar rond généré automatiquement à partir de ses initiales (1 à 2 lettres) sur un fond de couleur déterministe (dérivée d'un hash de l'identifiant du joueur, dans une palette de 6 teintes reprenant la charte de l'app). Les colonnes ont une hauteur décroissante (1er > 2e > 3e), façon estrade, avec le score de chacun affiché au-dessus.
+- **Récapitulatif** : sous le podium, la liste complète des joueurs classés par rang (pas seulement le top 3), avec avatar, nom, score final, nombre de victoires et nombre d'appels de Gabo.
+- **Actions** : `Rejouer` (mêmes joueurs, scores remis à zéro) et `Nouvelle partie` (confirmation puis effacement complet), directement depuis le popup.
+
+Si le popup est fermé (bouton `x`), il reste réaccessible via le bouton `Voir le podium` du bandeau « Partie terminée » affiché en haut de page tant que la partie est terminée.
 
 La fenêtre d'aide contient également le tableau des pouvoirs : `7 ou 8` permet de regarder une de ses propres cartes, `9 ou 10` une carte adverse, `Valet ou Dame` permet d'échanger une carte avec celle d'un adversaire sans regarder la carte donnée, et le `Roi` combine ces pouvoirs au choix. La règle spéciale de score des deux rois noirs reste décrite séparément.
 
@@ -79,11 +109,14 @@ Le parcours navigateur a été vérifié sur l'application locale :
 - Acceptation du score maximum de `45`
 - Comptage des victoires à chaque manche, avec égalités comptées pour chaque joueur concerné
 - Vérification du cas `25 + 35` : la somme brute est distinguée du total après palier `50 -> 25`
-- Vérification des seuils exacts `50 -> 25`, `100 -> 50` et `120 -> 60`
-- Vérification de la conservation du score réel au-dessus de 120
+- Vérification des seuils exacts `50 -> 25`, `100 -> 50` et `120 -> 60` en partie à 120, et `50 -> 25`, `60 -> 30` en partie à 60
+- Vérification de la conservation du score réel au-dessus du seuil de fin
+- Sélection du joueur ayant dit Gabo sur une manche, comptage vérifié dans le récapitulatif et le détail du joueur
+- Fin de partie déclenchant automatiquement le popup podium avec avatars, classement et récapitulatif complet
 - Ouverture du détail d'un joueur avec toutes ses manches saisies
 - Confirmation obligatoire avant `Nouvelle partie`
 - Effacement confirmé des scores, manches, victoires et options
+- Verrouillage des boutons `60` / `120` / `180` dès la première manche saisie, avec déverrouillage après `Nouvelle partie`
 
 Le build de production a également été validé avec `npm run build`. Les tests métier sont disponibles avec `npm test`.
 
@@ -114,7 +147,12 @@ Aucune clé API ni donnée secrète n'est nécessaire.
 
 ```text
 src/
-  App.tsx       # interface et logique de la partie
-  main.tsx      # point d'entrée React
-  styles.css    # styles responsive
+  App.tsx                         # interface, état de la partie, calculs dérivés (totaux, victoires, appels de Gabo)
+  main.tsx                        # point d'entrée React
+  styles.css                      # styles responsive (thème clair, une seule feuille)
+  domain/
+    scoreCalculator.ts            # logique pure des seuils de fin et paliers (GAME_MODES, applyThreshold)
+    scoreCalculator.test.ts       # tests unitaires Vitest de la logique de seuils, pour les 3 modes
 ```
+
+`scoreCalculator.ts` est le seul module testé unitairement : il ne dépend pas de React et reçoit un score cumulé plus des réglages (`thresholdsEnabled`, `steps`), pour rester facile à faire évoluer si les règles de paliers changent encore. Tout le reste (joueurs, manches, victoires, appels de Gabo, persistance `localStorage`) vit dans `App.tsx`, qui reste volontairement un seul composant.
